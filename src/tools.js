@@ -7,14 +7,37 @@ export const TOOL_CALL_RE = /```tool_call\s*\n([\s\S]*?)```/;
 
 export function parseToolCall(text) {
   const m = TOOL_CALL_RE.exec(text);
-  if (!m) return { before: text, tool: null, args: null };
-  const before = text.slice(0, m.index).trim();
-  try {
-    const payload = JSON.parse(m[1].trim());
-    return { before, tool: payload.tool, args: payload.args || {} };
-  } catch {
-    return { before, tool: "__parse_error__", args: {} };
+  if (m) {
+    const before = text.slice(0, m.index).trim();
+    try {
+      const payload = JSON.parse(m[1].trim());
+      return { before, tool: payload.tool, args: payload.args || {} };
+    } catch {
+      return { before, tool: "__parse_error__", args: {} };
+    }
   }
+  
+  // Fallback XML parser (jika model bandel pakai XML)
+  const xmlMatch = /<([a-zA-Z0-9_]+)>([\s\S]*?)<\/\1>/.exec(text);
+  if (xmlMatch) {
+    const tool = xmlMatch[1];
+    const knownTools = ["bash", "read_file", "write_file", "edit_file", "list_dir", "grep_search", "web_search", "fetch_url", "think", "task_done", "git_status", "git_diff", "git_log", "git_commit", "delegate_task"];
+    if (knownTools.includes(tool)) {
+      const before = text.slice(0, xmlMatch.index).trim();
+      const inner = xmlMatch[2];
+      const args = {};
+      
+      // Coba parse tag <key>value</key>
+      const argRe = /<([a-zA-Z0-9_]+)>([\s\S]*?)(?:<\/\1>|$)/g;
+      let argMatch;
+      while ((argMatch = argRe.exec(inner)) !== null) {
+        args[argMatch[1]] = argMatch[2].trim().replace(/^[a-zA-Z0-9_]+>|<\/[a-zA-Z0-9_]+>$/g, ""); // Bersihin tag sisa
+      }
+      return { before, tool, args };
+    }
+  }
+
+  return { before: text, tool: null, args: null };
 }
 
 function resolvePath(workdir, p) {
@@ -420,6 +443,7 @@ export function buildSystemPrompt(workdir, projectContext = "") {
     "## ATURAN PENTING",
     "",
     "### Tool Usage",
+    "- DILARANG KERAS menggunakan format XML (<tool>). WAJIB gunakan blok markdown ```tool_call berisi JSON!",
     "- Maksimal SATU blok tool_call per respons.",
     "- JSON di dalam blok harus valid (escape newline sebagai \\\\n).",
     "- Untuk edit file yang sudah ada, WAJIB pakai edit_file (bukan write_file), kecuali file baru atau rewrite total.",
