@@ -2,6 +2,7 @@
 import path from "node:path";
 import readline from "node:readline/promises";
 import { parseArgs } from "node:util";
+import { execSync } from "node:child_process";
 
 import { loadConfig, saveConfig, CONFIG_PATH } from "../src/config.js";
 import { listModels } from "../src/api.js";
@@ -36,6 +37,7 @@ const COMMANDS = [
   { name: "/history", desc: "lanjutkan sesi lama (rm = hapus)" },
   { name: "/clear", desc: "mulai sesi baru" },
   { name: "/config", desc: "konfigurasi aktif" },
+  { name: "/update", desc: "update YanLan Codex ke versi terbaru" },
   { name: "/exit", desc: "keluar" },
 ];
 
@@ -49,6 +51,7 @@ const HELP = `Perintah:
   /history rm      hapus sesi dari menu
   /clear           mulai sesi baru (riwayat aktif dihapus)
   /config          tampilkan konfigurasi aktif
+  /update          update YanLan Codex ke versi terbaru via GitHub
   /exit            keluar
 
 Flags: --yolo (auto-approve semua aksi), -C <dir> (direktori kerja),
@@ -176,6 +179,18 @@ async function handleCommand(rl, state, input) {
         console.log(c.green("API key disimpan."));
       }
       return true;
+    case "/update": {
+      console.log(c.cyan("Mengunduh update terbaru dari GitHub..."));
+      try {
+        const out = execSync("npm install -g git+https://github.com/DrizzStore01/YannLannCodex.git", {
+          stdio: "inherit"
+        });
+        console.log(c.green("Update berhasil! Silakan restart CLI (ketik /exit lalu buka lagi)."));
+      } catch (e) {
+        console.log(c.red(`Gagal update: ${e.message}`));
+      }
+      return true;
+    }
     case "/config":
       console.log(
         JSON.stringify(
