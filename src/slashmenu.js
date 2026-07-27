@@ -51,12 +51,24 @@ export function setupSlashMenu(rl, commands, promptLabel, { force = false } = {}
 
   function draw(matches) {
     const width = Math.max(...matches.map((m) => m.name.length));
+    const columns = stdout.columns || 80;
+    
     const lines = matches.map((m, i) => {
       const label = m.name.padEnd(width + 2);
+      const prefix = i === sel ? "❯ " : "  ";
+      
+      let desc = m.desc;
+      const fixedLen = prefix.length + label.length;
+      if (fixedLen + desc.length > columns) {
+        const maxDesc = Math.max(0, columns - fixedLen - 2);
+        desc = desc.slice(0, maxDesc) + "…";
+      }
+
       return i === sel
-        ? c.cyan(`❯ ${label}`) + c.dim(m.desc)
-        : `  ${label}` + c.dim(m.desc);
+        ? c.cyan(`${prefix}${label}`) + c.dim(desc)
+        : `${prefix}${label}` + c.dim(desc);
     });
+    
     stdout.write(
       `\n\x1b[J` + lines.join("\n") + `\x1b[${lines.length}A\x1b[${col()}G`
     );
@@ -131,6 +143,11 @@ export function setupSlashMenu(rl, commands, promptLabel, { force = false } = {}
       // Kosongkan history readline biar ↑/↓ jadi navigasi menu, bukan ganti input
       savedHistory = rl.history;
       rl.history = [];
+      
+      // Alokasi ruang layar di awal biar pas render menu ke bawah, terminal nggak scroll mendadak
+      // yang bisa bikin kursor acak-acakan (bug tumpuk).
+      const maxDrawLines = commands.length;
+      stdout.write("\n".repeat(maxDrawLines) + `\x1b[${maxDrawLines}A`);
     }
 
     if (key.name === "up") {
