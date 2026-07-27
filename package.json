@@ -1,0 +1,20 @@
+{
+  "name": "agentcli",
+  "version": "0.1.0",
+  "description": "AgentCLI by YanLann Codex — AI agent CLI dengan tools (bash, read/write file). Dev: Xiao Yan Dev, Always Codex, Lann",
+  "type": "module",
+  "bin": {
+    "codex": "bin/agentcli.js",
+    "yanlan": "bin/agentcli.js",
+    "ylc": "bin/agentcli.js",
+    "agentcli": "bin/agentcli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node bin/agentcli.js",
+    "test": "node test/mock-server.js"
+  },
+  "license": "MIT"
+}
