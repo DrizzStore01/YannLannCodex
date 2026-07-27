@@ -133,7 +133,30 @@ async function executeTool(rl, state, tool, args) {
     case "task_done": {
       const summary = args.summary || "Tugas selesai.";
       panel("✅ Selesai", summary, c.green);
-      return "__TASK_DONE__";
+      return { __done: true, summary };
+    }
+    case "delegate_task": {
+      const role = args.role || "Sub-Agent";
+      const task = args.task || "";
+      const context = args.context || "";
+      console.log(c.magenta(`\n🤖 Mendelegasikan tugas ke Sub-Agent [${role}]...`));
+      
+      const childState = {
+        config: state.config,
+        workdir: state.workdir,
+        history: [],
+        autoApprove: state.autoApprove,
+        systemPrompt: state.systemPrompt.replace(
+          "Kamu bekerja seperti senior developer yang teliti dan sistematis.",
+          `Peran kamu adalah: ${role}. Fokus pada tugas yang diberikan.`
+        ),
+      };
+      
+      const prompt = `[DELEGATED TASK]\nTugas Anda:\n${task}\n\nKonteks Tambahan:\n${context}\n\nSelesaikan tugas ini secara mandiri menggunakan tool yang tersedia. Jika selesai, WAJIB panggil task_done dengan ringkasan lengkap.`;
+      
+      const summary = await agentTurn(rl, childState, prompt);
+      console.log(c.magenta(`\n🔙 Sub-Agent [${role}] selesai bekerja.`));
+      return `Hasil dari Sub-Agent [${role}]:\n${summary || "(Tidak ada ringkasan)"}`;
     }
     case "__parse_error__":
       return "ERROR: JSON di blok tool_call tidak valid. Perbaiki dan kirim ulang.";
@@ -213,11 +236,14 @@ export async function agentTurn(rl, state, userInput) {
       return;
     }
 
-    state.history.push({ role: "user", content: `Hasil tool ${tool}:\n${result}` });
+    state.history.push({ role: "user", content: `Hasil tool ${tool}:\n${typeof result === 'object' ? JSON.stringify(result) : result}` });
 
     // task_done = sinyal berhenti
-    if (result === "__TASK_DONE__") return;
+    if (result && result.__done) {
+      return result.summary;
+    }
   }
 
   console.log(c.red(`Stop: batas ${state.config.maxStepsPerTurn} step per giliran tercapai.`));
+  return null;
 }

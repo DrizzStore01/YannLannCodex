@@ -13,6 +13,7 @@ import { c, panel, spinner } from "../src/ui.js";
 import { pick } from "../src/picker.js";
 import { setupSlashMenu, resolveCommand } from "../src/slashmenu.js";
 import { showLogo } from "../src/logo.js";
+import { runAutoFix } from "../src/autofix.js";
 import {
   newSessionId,
   saveSession,
@@ -35,6 +36,7 @@ const COMMANDS = [
   { name: "/models", desc: "list model dari API" },
   { name: "/key", desc: "set API key" },
   { name: "/history", desc: "lanjutkan sesi lama (rm = hapus)" },
+  { name: "/fix", desc: "jalankan god-mode auto fix untuk perintah (contoh: /fix npm test)" },
   { name: "/clear", desc: "mulai sesi baru" },
   { name: "/config", desc: "konfigurasi aktif" },
   { name: "/update", desc: "update YanLan Codex ke versi terbaru" },
@@ -49,6 +51,7 @@ const HELP = `Perintah:
   /key <apikey>    set API key (disimpan ke ${CONFIG_PATH})
   /history         pilih & lanjutkan sesi percakapan lama
   /history rm      hapus sesi dari menu
+  /fix <cmd>       god-mode auto fix, jalankan perintah dan perbaiki error berulang kali
   /clear           mulai sesi baru (riwayat aktif dihapus)
   /config          tampilkan konfigurasi aktif
   /update          update YanLan Codex ke versi terbaru via GitHub
@@ -189,6 +192,10 @@ async function handleCommand(rl, state, input) {
       } catch (e) {
         console.log(c.red(`Gagal update: ${e.message}`));
       }
+      return true;
+    }
+    case "/fix": {
+      await runAutoFix(rl, state, arg);
       return true;
     }
     case "/config":
