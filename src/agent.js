@@ -20,13 +20,30 @@ import { maybeSummarize, historySize } from "./summarize.js";
 async function askApproval(rl, state, label) {
   if (state.autoApprove) return true;
   while (true) {
-    const ans = (await rl.question(c.bold(`${label} [y]a / [n]tidak / [a]selalu: `))).trim().toLowerCase();
-    if (["y", "ya", ""].includes(ans)) return true;
-    if (["n", "tidak"].includes(ans)) return false;
-    if (["a", "selalu"].includes(ans)) {
-      state.autoApprove = true;
+    let raw;
+    try {
+      raw = await rl.question(c.bold(`${label} [y]a / [n]tidak / [a]selalu: `));
+    } catch {
+      return false;
+    }
+    const ans = (raw || "").trim().toLowerCase();
+
+    // Affirmative (ya, yes, ok, oke, yep, sure, Enter)
+    if (["y", "ya", "yes", "ok", "oke", "yep", "1", "s", "sure", ""].includes(ans)) {
       return true;
     }
+    // Always / Auto-approve for session
+    if (["a", "selalu", "always", "yolo", "all"].includes(ans)) {
+      state.autoApprove = true;
+      console.log(c.yellow("  (Mode Auto-Approve diaktifkan untuk sesi ini)"));
+      return true;
+    }
+    // Negative (tidak, no, ga, gak, cancel)
+    if (["n", "tidak", "no", "ga", "gak", "g", "0", "c", "cancel"].includes(ans)) {
+      return false;
+    }
+
+    console.log(c.dim("  Ketik 'y' (Ya), 'n' (Tidak), atau 'a' (Selalu/Auto-approve)."));
   }
 }
 

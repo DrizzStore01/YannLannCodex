@@ -446,6 +446,7 @@ export function buildSystemPrompt(workdir, projectContext = "") {
     "- DILARANG KERAS menggunakan format XML (<tool>). WAJIB gunakan blok markdown ```tool_call berisi JSON!",
     "- Maksimal SATU blok tool_call per respons.",
     "- JSON di dalam blok harus valid (escape newline sebagai \\\\n).",
+    "- SETELAH TOOL DIEKSEKUSI: Jika tugas belum selesai seluruhnya, kamu WAJIB memanggil tool berikutnya di langkah selanjutnya. JANGAN berhenti bicara tanpa memanggil tool jika pekerjaan belum tuntas! Jika semua tugas sudah beres, WAJIB panggil task_done.",
     "- Untuk edit file yang sudah ada, WAJIB pakai edit_file (bukan write_file), kecuali file baru atau rewrite total.",
     "- Pakai read_file dulu sebelum edit_file biar tau isi yang benar.",
     "",
