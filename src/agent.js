@@ -18,6 +18,7 @@ import { c, panel, spinner, createStreamRenderer } from "./ui.js";
 import { maybeSummarize, historySize } from "./summarize.js";
 import { runScrapeDynamic, runScreenshotWeb } from "./browser.js";
 import { mcpManager } from "./mcp.js";
+import { checkAndTrackUsage } from "./usage.js";
 
 async function askApproval(rl, state, label) {
   if (state.autoApprove) return true;
@@ -216,6 +217,18 @@ async function executeTool(rl, state, tool, args) {
 }
 
 export async function agentTurn(rl, state, userInput) {
+  const usage = checkAndTrackUsage(state.config.apikey);
+  if (!usage.allowed) {
+    panel(
+      "⚠️ Kuota Harian Publik Habis",
+      `Anda telah mencapai batas ${usage.limit} request gratis hari ini.\n\n` +
+      `Untuk penggunaan UNLIMITED tanpa batas, silakan masukkan API Key Anda sendiri:\n` +
+      `  ${c.cyan("/key <KODE_API_KEY_ANDA>")}\n`,
+      c.yellow
+    );
+    return;
+  }
+
   state.history.push({ role: "user", content: userInput });
 
   for (let step = 0; step < state.config.maxStepsPerTurn; step++) {

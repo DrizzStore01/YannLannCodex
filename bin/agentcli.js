@@ -16,6 +16,7 @@ import { showLogo } from "../src/logo.js";
 import { runAutoFix } from "../src/autofix.js";
 import { maskSecret } from "../src/security.js";
 import { mcpManager } from "../src/mcp.js";
+import { getUsageStatus } from "../src/usage.js";
 import {
   newSessionId,
   saveSession,
@@ -41,6 +42,7 @@ const COMMANDS = [
   { name: "/fix", desc: "jalankan god-mode auto fix untuk perintah (contoh: /fix npm test)" },
   { name: "/clear", desc: "mulai sesi baru" },
   { name: "/config", desc: "konfigurasi aktif" },
+  { name: "/usage", desc: "cek sisa kuota harian publik" },
   { name: "/update", desc: "update YanLan Codex ke versi terbaru" },
   { name: "/exit", desc: "keluar" },
 ];
@@ -56,6 +58,7 @@ const HELP = `Perintah:
   /fix <cmd>       god-mode auto fix, jalankan perintah dan perbaiki error berulang kali
   /clear           mulai sesi baru (riwayat aktif dihapus)
   /config          tampilkan konfigurasi aktif
+  /usage           tampilkan sisa kuota harian publik
   /update          update YanLan Codex ke versi terbaru via GitHub
   /exit            keluar
 
@@ -209,6 +212,18 @@ async function handleCommand(rl, state, input) {
         )
       );
       return true;
+    case "/usage": {
+      const status = getUsageStatus(state.config.apikey);
+      if (!status.isPublic) {
+        console.log(c.green(`\n📊 Status Kuota: ${status.message}\n`));
+      } else {
+        console.log(c.yellow(`\n📊 Status Kuota Harian Publik (Key Default):`));
+        console.log(`  - Terpakai: ${c.bold(status.count)} / ${status.limit} request hari ini`);
+        console.log(`  - Sisa Kuota: ${c.bold(c.green(status.remaining + " request"))}`);
+        console.log(c.dim(`\n  Tips: Masukkan API key sendiri (/key <apikey>) untuk penggunaan UNLIMITED!\n`));
+      }
+      return true;
+    }
     default: {
       const resolved = resolveCommand(COMMANDS, cmd);
       if (resolved?.name && resolved.name !== cmd) {
