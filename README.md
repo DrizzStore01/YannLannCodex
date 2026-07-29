@@ -60,12 +60,14 @@ codex -c
 codex --yolo
 ```
 
-### Konfigurasi API Key
-Saat pertama kali masuk, Anda harus memasukkan API Key. Di dalam terminal interaktif `codex`, ketik perintah ini:
+### Konfigurasi API Key & Keanggotaan Member
+Secara default, pengguna publik mendapatkan kuota gratis **50 request/hari**. Untuk mendapatkan akses **UNLIMITED tanpa batas**, Anda bisa memasukkan Key Member resmi dari Admin atau Key Dev (misal: `/key member` atau `/key agent` atau Key berawalan `ylc-` / `codex-`):
+
 ```
-/key KODE_API_KEY_ANDA
+/key KODE_API_KEY_MEMBER_ANDA
 ```
-API Key dan konfigurasi lainnya akan tersimpan aman di `~/.agentcli.json` (bisa juga di-set lewat environment variable `AGENTCLI_API_KEY`).
+API Key akan tersimpan aman dan terenkripsi otomatis di `~/.agentcli.json` (bisa juga di-set lewat environment variable `AGENTCLI_API_KEY`).
+Gunakan perintah `/usage` di dalam CLI untuk mengecek sisa kuota harian Anda.
 
 ### Perintah Slash (Slash Commands)
 Ketik `/` di prompt untuk memunculkan menu perintah bawaan:

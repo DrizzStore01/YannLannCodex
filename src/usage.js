@@ -4,18 +4,29 @@ import path from "node:path";
 import { c } from "./ui.js";
 
 const USAGE_FILE = path.join(os.homedir(), ".agentcli", "usage.json");
-const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk pengguna publik (key 'public')
+const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk pengguna publik
+
+// Daftar Key Resmi & Prefix yang diizinkan Admin untuk Unlimited / Member Access:
+const AUTHORIZED_KEYS = ["agent", "member", "codex-member", "ylc-member"];
+
+export function isUnlimitedKey(key) {
+  if (!key || typeof key !== "string") return false;
+  const k = key.trim().toLowerCase();
+  if (AUTHORIZED_KEYS.includes(k)) return true;
+  if (k.startsWith("ylc-") || k.startsWith("codex-") || k.startsWith("admin-") || k.startsWith("member-")) return true;
+  return false;
+}
 
 /**
  * Cek dan hitung penggunaan request harian untuk key publik
  */
 export function checkAndTrackUsage(apikey) {
-  // Hanya key publik ("public") yang diberi batas kuota harian.
-  // Key dev ("agent") atau API Key kustom pengguna = UNLIMITED!
-  if (!apikey || apikey !== "public") {
+  // Jika menggunakan Key Resmi Admin / Member yang terotorisasi = UNLIMITED ♾️
+  if (isUnlimitedKey(apikey)) {
     return { allowed: true, isPublic: false };
   }
 
+  // Jika menggunakan Key 'public' atau key biasa tanpa izin admin = LIMITED 50/hari
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   let data = { date: today, count: 0 };
 
@@ -61,9 +72,10 @@ export function checkAndTrackUsage(apikey) {
  * Dapatkan status kuota harian saat ini
  */
 export function getUsageStatus(apikey) {
-  if (!apikey || apikey !== "public") {
-    const modeName = apikey === "agent" ? "Dev Key (Unlimited)" : "API Key Kustom (Unlimited)";
-    return { isPublic: false, message: `Unlimited ♾️ [${modeName}]` };
+  if (isUnlimitedKey(apikey)) {
+    const k = (apikey || "").trim().toLowerCase();
+    const role = k === "agent" ? "Admin Dev Key" : "Member Authorized Key";
+    return { isPublic: false, message: `Unlimited ♾️ [${role}]` };
   }
 
   const today = new Date().toISOString().split("T")[0];
