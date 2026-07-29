@@ -4,13 +4,25 @@
  * beberapa bentuk umum (OpenAI-style dan custom {success, result/reply/...}).
  */
 
+function getRealApiKey(apikey) {
+  if (!apikey) return "agent";
+  const k = String(apikey).trim().toLowerCase();
+  // Map virtual public aliases ke real backend API key ('agent')
+  if (["yannlann-free", "public", "guest", "free"].includes(k)) {
+    return "agent";
+  }
+  return apikey;
+}
+
 export async function* chatCompletionStream(config, messages, { signal } = {}) {
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const realKey = getRealApiKey(config.apikey);
+
   const body = {
     model: config.model,
     messages,
     stream: true,
-    apikey: config.apikey,
+    apikey: realKey,
   };
 
   const controller = new AbortController();
@@ -23,7 +35,7 @@ export async function* chatCompletionStream(config, messages, { signal } = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apikey}`,
+        Authorization: `Bearer ${realKey}`,
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -76,7 +88,7 @@ export async function* chatCompletionStream(config, messages, { signal } = {}) {
                 yield { type: "content", text: delta.content };
              }
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -88,11 +100,13 @@ export async function* chatCompletionStream(config, messages, { signal } = {}) {
 
 export async function chatCompletion(config, messages, { signal } = {}) {
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const realKey = getRealApiKey(config.apikey);
+
   const body = {
     model: config.model,
     messages,
     stream: false,
-    apikey: config.apikey,
+    apikey: realKey,
   };
 
   const controller = new AbortController();
@@ -105,7 +119,7 @@ export async function chatCompletion(config, messages, { signal } = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apikey}`,
+        Authorization: `Bearer ${realKey}`,
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -157,21 +171,28 @@ export function extractReply(data) {
 }
 
 export async function listModels(config) {
-  const url = `${config.baseUrl.replace(/\/$/, "")}/models?apikey=${encodeURIComponent(config.apikey)}`;
-  const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${config.apikey}` },
-  });
-  const text = await resp.text();
-  let data;
+  const realKey = getRealApiKey(config.apikey);
+  const FALLBACK_MODELS = ["qwen3.7-plus", "qwen3.8-max-preview", "gpt-4o", "claude-3-5-sonnet", "deepseek-r1"];
+
   try {
-    data = JSON.parse(text);
+    const url = `${config.baseUrl.replace(/\/$/, "")}/models?apikey=${encodeURIComponent(realKey)}`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${realKey}` },
+    });
+    const text = await resp.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return FALLBACK_MODELS;
+    }
+    if (!resp.ok || data.success === false) {
+      return FALLBACK_MODELS;
+    }
+    const models = Array.isArray(data) ? data : data.data || data.models || data.result || [];
+    const parsed = models.map((m) => (typeof m === "string" ? m : m.id || m.name || JSON.stringify(m)));
+    return parsed.length ? parsed : FALLBACK_MODELS;
   } catch {
-    throw new Error(`Respons bukan JSON (HTTP ${resp.status}): ${text.slice(0, 200)}`);
+    return FALLBACK_MODELS;
   }
-  if (!resp.ok || data.success === false) {
-    throw new Error(`API error: ${data.error || data.message || `HTTP ${resp.status}`}`);
-  }
-  // Terima {data:[...]}, {models:[...]}, atau array langsung
-  const models = Array.isArray(data) ? data : data.data || data.models || data.result || [];
-  return models.map((m) => (typeof m === "string" ? m : m.id || m.name || JSON.stringify(m)));
 }
