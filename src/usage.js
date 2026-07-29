@@ -4,29 +4,22 @@ import path from "node:path";
 import { c } from "./ui.js";
 
 const USAGE_FILE = path.join(os.homedir(), ".agentcli", "usage.json");
-const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk pengguna publik
-
-// Daftar Key Resmi & Prefix yang diizinkan Admin untuk Unlimited / Member Access:
-const AUTHORIZED_KEYS = ["agent", "member", "codex-member", "ylc-member"];
-
-export function isUnlimitedKey(key) {
-  if (!key || typeof key !== "string") return false;
-  const k = key.trim().toLowerCase();
-  if (AUTHORIZED_KEYS.includes(k)) return true;
-  if (k.startsWith("ylc-") || k.startsWith("codex-") || k.startsWith("admin-") || k.startsWith("member-")) return true;
-  return false;
-}
+const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk semua pengguna publik/gratis
 
 /**
- * Cek dan hitung penggunaan request harian untuk key publik
+ * Cek dan hitung penggunaan request harian:
+ * - HANYA key 'agent' (Secret Admin Dev Key) yang UNLIMITED.
+ * - Semua key lainnya (termasuk key publik gratisan yang di-share di GitHub/README) = LIMITED 50/hari.
  */
 export function checkAndTrackUsage(apikey) {
-  // Jika menggunakan Key Resmi Admin / Member yang terotorisasi = UNLIMITED ♾️
-  if (isUnlimitedKey(apikey)) {
+  const k = (apikey || "").trim().toLowerCase();
+
+  // HANYA key 'agent' milik Admin/Dev yang UNLIMITED ♾️
+  if (k === "agent") {
     return { allowed: true, isPublic: false };
   }
 
-  // Jika menggunakan Key 'public' atau key biasa tanpa izin admin = LIMITED 50/hari
+  // Semua pengguna publik / gratisan = LIMITED (50 request/hari)
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   let data = { date: today, count: 0 };
 
@@ -72,10 +65,9 @@ export function checkAndTrackUsage(apikey) {
  * Dapatkan status kuota harian saat ini
  */
 export function getUsageStatus(apikey) {
-  if (isUnlimitedKey(apikey)) {
-    const k = (apikey || "").trim().toLowerCase();
-    const role = k === "agent" ? "Admin Dev Key" : "Member Authorized Key";
-    return { isPublic: false, message: `Unlimited ♾️ [${role}]` };
+  const k = (apikey || "").trim().toLowerCase();
+  if (k === "agent") {
+    return { isPublic: false, message: "Unlimited ♾️ [Secret Admin Dev Key]" };
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -93,6 +85,6 @@ export function getUsageStatus(apikey) {
     count,
     limit: PUBLIC_DAILY_LIMIT,
     remaining,
-    message: `Publik Gratis: ${count}/${PUBLIC_DAILY_LIMIT} request terpakai hari ini (Sisa: ${remaining})`,
+    message: `Pengguna Publik Gratis: ${count}/${PUBLIC_DAILY_LIMIT} request terpakai hari ini (Sisa: ${remaining})`,
   };
 }

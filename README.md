@@ -60,11 +60,11 @@ codex -c
 codex --yolo
 ```
 
-### Konfigurasi API Key & Keanggotaan Member
-Secara default, pengguna publik mendapatkan kuota gratis **50 request/hari**. Untuk mendapatkan akses **UNLIMITED tanpa batas**, Anda bisa memasukkan Key Member resmi dari Admin atau Key Dev (misal: `/key member` atau `/key agent` atau Key berawalan `ylc-` / `codex-`):
+### Konfigurasi API Key
+Penggunaan CLI untuk publik menggunakan API Key gratisan (`yannlann-free`) dengan batas kuota **50 request/hari**. Di dalam terminal interaktif `codex`, ketik perintah ini:
 
 ```
-/key KODE_API_KEY_MEMBER_ANDA
+/key yannlann-free
 ```
 API Key akan tersimpan aman dan terenkripsi otomatis di `~/.agentcli.json` (bisa juga di-set lewat environment variable `AGENTCLI_API_KEY`).
 Gunakan perintah `/usage` di dalam CLI untuk mengecek sisa kuota harian Anda.
