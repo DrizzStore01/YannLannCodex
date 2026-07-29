@@ -1,8 +1,8 @@
 /**
- * Client untuk AlwaysCodex chat completions API.
- * Format respons API belum terdokumentasi, jadi extractReply() menerima
- * beberapa bentuk umum (OpenAI-style dan custom {success, result/reply/...}).
+ * Client untuk AlwaysCodex REST API & Chat completions.
+ * Menggunakan official SDK 'alwayscodex-api' dengan fallback parser.
  */
+import codex from "alwayscodex-api";
 
 function getRealApiKey(apikey) {
   if (!apikey) return "agent";
@@ -12,6 +12,15 @@ function getRealApiKey(apikey) {
     return "agent";
   }
   return apikey;
+}
+
+export function getSDKClient(config) {
+  const realKey = getRealApiKey(config.apikey);
+  return codex({
+    apiKey: realKey,
+    baseURL: config.baseUrl.replace(/\/$/, ""),
+    timeout: config.requestTimeout || 60000,
+  });
 }
 
 export async function* chatCompletionStream(config, messages, { signal } = {}) {
@@ -66,7 +75,7 @@ export async function* chatCompletionStream(config, messages, { signal } = {}) {
   let buffer = "";
   try {
     for await (const chunk of resp.body) {
-      clearTimeout(timer); // connection alive
+      clearTimeout(timer);
       buffer += decoder.decode(chunk, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop();
@@ -99,6 +108,19 @@ export async function* chatCompletionStream(config, messages, { signal } = {}) {
 }
 
 export async function chatCompletion(config, messages, { signal } = {}) {
+  const sdk = getSDKClient(config);
+  try {
+    const res = await sdk.v4.chat.completions({
+      model: config.model,
+      messages,
+      stream: false,
+    });
+    const reply = extractReply(res);
+    if (reply != null) return reply;
+  } catch {
+    // fallback jika SDK auto-sync belum siap
+  }
+
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
   const realKey = getRealApiKey(config.apikey);
 
@@ -149,12 +171,10 @@ export async function chatCompletion(config, messages, { signal } = {}) {
 }
 
 export function extractReply(data) {
-  // OpenAI-style
   const choice = data.choices?.[0];
   if (choice?.message?.content != null) return String(choice.message.content);
   if (choice?.text != null) return String(choice.text);
 
-  // Bentuk custom yang umum dipakai API sejenis
   for (const key of ["result", "data", "response"]) {
     const v = data[key];
     if (typeof v === "string") return v;
@@ -173,6 +193,16 @@ export function extractReply(data) {
 export async function listModels(config) {
   const realKey = getRealApiKey(config.apikey);
   const FALLBACK_MODELS = ["qwen3.7-plus", "qwen3.8-max-preview", "gpt-4o", "claude-3-5-sonnet", "deepseek-r1"];
+
+  try {
+    const sdk = getSDKClient(config);
+    const res = await sdk.v4.models();
+    const models = Array.isArray(res) ? res : res?.data || res?.models || [];
+    const parsed = models.map((m) => (typeof m === "string" ? m : m.id || m.name));
+    if (parsed.length) return parsed;
+  } catch {
+    // fallback
+  }
 
   try {
     const url = `${config.baseUrl.replace(/\/$/, "")}/models?apikey=${encodeURIComponent(realKey)}`;
