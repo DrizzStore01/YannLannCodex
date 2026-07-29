@@ -11,7 +11,7 @@ const CONFIG_PATH = path.join(os.homedir(), ".agentcli.json");
 const DEFAULTS_ENCRYPTED = {
   baseUrl: "enc:static:d8284eb1c1202c5b1f81dbb4ea87ee00:eabb470e7d3ffd0feb2b0cd02745b0ffd216fdf522b07348a7a2cc6f64f2e4801578e177",
   apikey: "enc:static:d26176d74ee962bb0cfb77342d03985f:f2ba51126766", // decrypts to "public"
-  model: "qwen3.7-plus",
+  model: "gpt4",
   requestTimeout: 120_000,
   bashTimeout: 120_000,
   maxToolOutput: 16000,
