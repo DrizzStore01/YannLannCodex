@@ -14,6 +14,7 @@ import { pick } from "../src/picker.js";
 import { setupSlashMenu, resolveCommand } from "../src/slashmenu.js";
 import { showLogo } from "../src/logo.js";
 import { runAutoFix } from "../src/autofix.js";
+import { maskSecret } from "../src/security.js";
 import {
   newSessionId,
   saveSession,
@@ -201,7 +202,7 @@ async function handleCommand(rl, state, input) {
     case "/config":
       console.log(
         JSON.stringify(
-          { ...state.config, apikey: state.config.apikey.slice(0, 3) + "***", configFile: CONFIG_PATH },
+          { ...state.config, apikey: maskSecret(state.config.apikey), configFile: CONFIG_PATH },
           null,
           2
         )
