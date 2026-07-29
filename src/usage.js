@@ -4,14 +4,15 @@ import path from "node:path";
 import { c } from "./ui.js";
 
 const USAGE_FILE = path.join(os.homedir(), ".agentcli", "usage.json");
-const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk user publik (key default 'agent')
+const PUBLIC_DAILY_LIMIT = 50; // Batas 50 request per hari untuk pengguna publik (key 'public')
 
 /**
  * Cek dan hitung penggunaan request harian untuk key publik
  */
 export function checkAndTrackUsage(apikey) {
-  // Jika user pakai API Key kustom mereka sendiri, UNLIMITED (bebas tanpa batas)
-  if (apikey && apikey !== "agent") {
+  // Hanya key publik ("public") yang diberi batas kuota harian.
+  // Key dev ("agent") atau API Key kustom pengguna = UNLIMITED!
+  if (!apikey || apikey !== "public") {
     return { allowed: true, isPublic: false };
   }
 
@@ -60,8 +61,9 @@ export function checkAndTrackUsage(apikey) {
  * Dapatkan status kuota harian saat ini
  */
 export function getUsageStatus(apikey) {
-  if (apikey && apikey !== "agent") {
-    return { isPublic: false, message: "Unlimited ♾️ (Menggunakan API Key Kustom)" };
+  if (!apikey || apikey !== "public") {
+    const modeName = apikey === "agent" ? "Dev Key (Unlimited)" : "API Key Kustom (Unlimited)";
+    return { isPublic: false, message: `Unlimited ♾️ [${modeName}]` };
   }
 
   const today = new Date().toISOString().split("T")[0];
