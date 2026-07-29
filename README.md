@@ -90,12 +90,28 @@ Berikut daftar tool yang dimiliki YanLan Codex:
 | `read_file` / `list_dir` | Baca isi file dan struktur folder | ❌ Auto |
 | `write_file` / `edit_file` | Tulis/Buat file baru atau edit sebagian baris kode | ✅ Ya |
 | `grep_search` | Cari pattern spesifik di banyak file sekaligus | ❌ Auto |
-| `web_search` / `fetch_url` | Cari error/dokumentasi di Google dan baca isi webnya | ❌ Auto |
+| `web_search` / `fetch_url` | Cari error/dokumentasi di Google dan baca isi web statis | ❌ Auto |
+| `scrape_dynamic` | Render JavaScript & sikat web dinamis (React, Vue, Anime site) | ❌ Auto |
+| `screenshot_web` | Tangkap screenshot tampilan web ke file image | ❌ Auto |
 | `git_status` / `git_diff` | Cek status perubahan Git di project | ❌ Auto |
 | `git_log` / `git_commit` | Cek riwayat commit dan buat commit baru | ❌ Auto / ✅ Ya |
+| `delegate_task` | Mandatkan sub-tugas ke Sub-Agent AI independen | ❌ Auto |
 | `think` | Scratchpad / mikir internal sebelum eksekusi besar | ❌ Auto |
 
-> *Semua tool yang sifatnya merubah sistem (Execute Bash, Tulis Kode, Commit Git) akan meminta konfirmasi `(y/n/a)` terlebih dahulu demi keamanan Anda. Gunakan opsi `a` (approve all) jika Anda sudah percaya dengan rencana AI.*
+### 🔌 Konfigurasi MCP (Model Context Protocol)
+YanLan Codex mendukung integrasi MCP Server secara native. Cukup buat file `~/.agentcli/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  }
+}
+```
+Saat CLI dijalankan, semua tool dari MCP Server akan otomatis terdeteksi dan bisa digunakan oleh AI!
 
 ---
 

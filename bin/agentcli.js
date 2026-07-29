@@ -15,6 +15,7 @@ import { setupSlashMenu, resolveCommand } from "../src/slashmenu.js";
 import { showLogo } from "../src/logo.js";
 import { runAutoFix } from "../src/autofix.js";
 import { maskSecret } from "../src/security.js";
+import { mcpManager } from "../src/mcp.js";
 import {
   newSessionId,
   saveSession,
@@ -250,6 +251,7 @@ async function main() {
 
   const config = loadConfig();
   const workdir = path.resolve(values.dir);
+  await mcpManager.init();
   const projectContext = buildProjectContext(workdir);
   const state = {
     config,

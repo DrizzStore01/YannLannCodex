@@ -401,7 +401,10 @@ export function runGitCommit(workdir, message, opts = {}) {
   return gitExec(workdir, ["commit", "-m", message], opts);
 }
 
+import { mcpManager } from "./mcp.js";
+
 export function buildSystemPrompt(workdir, projectContext = "") {
+  const mcpPrompts = mcpManager.getToolPrompts();
   return [
     `Kamu adalah AI coding agent profesional di terminal. Kamu bekerja seperti senior developer yang teliti dan sistematis.`,
     `OS: linux. Direktori kerja: ${workdir}`,
@@ -426,15 +429,20 @@ export function buildSystemPrompt(workdir, projectContext = "") {
     '- bash: {"tool":"bash","args":{"command":"<perintah shell>"}}',
     '- think: {"tool":"think","args":{"thought":"<analisis/rencana>"}} — mikir dulu sebelum bertindak',
     "",
-    "### Internet",
+    "### Internet & Web Scraping",
     '- web_search: {"tool":"web_search","args":{"query":"<kata kunci>"}} — cari info online',
-    '- fetch_url: {"tool":"fetch_url","args":{"url":"<url>"}} — baca halaman web',
+    '- fetch_url: {"tool":"fetch_url","args":{"url":"<url>"}} — baca halaman web statis',
+    '- scrape_dynamic: {"tool":"scrape_dynamic","args":{"url":"<url>","waitFor":3000}} — sikat web dinamis (React, Vue, Anime web) dengan render JavaScript otomatis via Puppeteer',
+    '- screenshot_web: {"tool":"screenshot_web","args":{"url":"<url>","output":"screenshot.png"}} — ambil screenshot tampilan web',
     "",
     "### Git",
     '- git_status: {"tool":"git_status","args":{}} — lihat status repo',
     '- git_diff: {"tool":"git_diff","args":{"file":"<opsional>","staged":false}} — lihat perubahan',
     '- git_log: {"tool":"git_log","args":{"count":10}} — lihat riwayat commit',
     '- git_commit: {"tool":"git_commit","args":{"message":"<pesan commit>"}} — stage all + commit',
+    "",
+    mcpPrompts.length ? "### MCP External Tools" : "",
+    ...mcpPrompts,
     "",
     "### Flow Control & Delegation",
     '- task_done: {"tool":"task_done","args":{"summary":"<ringkasan>"}} — panggil kalau tugas selesai',

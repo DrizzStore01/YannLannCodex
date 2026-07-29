@@ -16,6 +16,8 @@ import {
 } from "./tools.js";
 import { c, panel, spinner, createStreamRenderer } from "./ui.js";
 import { maybeSummarize, historySize } from "./summarize.js";
+import { runScrapeDynamic, runScreenshotWeb } from "./browser.js";
+import { mcpManager } from "./mcp.js";
 
 async function askApproval(rl, state, label) {
   if (state.autoApprove) return true;
@@ -92,6 +94,24 @@ async function executeTool(rl, state, tool, args) {
       console.log(c.dim(`🌐 mengambil: ${u}`));
       const sp = spinner("fetching...");
       const result = await runFetchUrl(u, { maxOutput: opts.maxOutput, timeout: opts.timeout });
+      sp.stop();
+      return result;
+    }
+    case "scrape_dynamic": {
+      const u = args.url || "";
+      const wf = args.waitFor || 2000;
+      console.log(c.dim(`🕸️ Dynamic Scraping: ${u}`));
+      const sp = spinner("rendering JS & scraping...");
+      const result = await runScrapeDynamic(u, { waitFor: wf, maxOutput: opts.maxOutput, timeout: opts.timeout });
+      sp.stop();
+      return result;
+    }
+    case "screenshot_web": {
+      const u = args.url || "";
+      const out = args.output || "screenshot.png";
+      console.log(c.dim(`📸 Screenshot Web: ${u}`));
+      const sp = spinner("taking screenshot...");
+      const result = await runScreenshotWeb(u, out, { timeout: opts.timeout });
       sp.stop();
       return result;
     }
@@ -177,8 +197,21 @@ async function executeTool(rl, state, tool, args) {
     }
     case "__parse_error__":
       return "ERROR: JSON di blok tool_call tidak valid. Perbaiki dan kirim ulang.";
-    default:
+    default: {
+      if (tool && tool.startsWith("mcp__")) {
+        console.log(c.dim(`🔌 Eksekusi MCP Tool: ${tool}`));
+        const sp = spinner("MCP executing...");
+        try {
+          const res = await mcpManager.callTool(tool, args);
+          sp.stop();
+          return res;
+        } catch (e) {
+          sp.stop();
+          return `ERROR MCP: ${e.message}`;
+        }
+      }
       return `ERROR: tool "${tool}" tidak dikenal.`;
+    }
   }
 }
 

@@ -16,5 +16,10 @@
     "start": "node bin/agentcli.js",
     "test": "node test/mock-server.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "jsdom": "^22.1.0",
+    "puppeteer-core": "^21.11.0"
+  }
 }
