@@ -17,6 +17,7 @@ import { runAutoFix } from "../src/autofix.js";
 import { maskSecret } from "../src/security.js";
 import { mcpManager } from "../src/mcp.js";
 import { getUsageStatus } from "../src/usage.js";
+import { checkAutoUpdate, performUpdate } from "../src/updater.js";
 import {
   newSessionId,
   saveSession,
@@ -188,15 +189,7 @@ async function handleCommand(rl, state, input) {
       }
       return true;
     case "/update": {
-      console.log(c.cyan("Mengunduh update terbaru dari GitHub..."));
-      try {
-        const out = execSync("npm install -g git+https://github.com/DrizzStore01/YannLannCodex.git", {
-          stdio: "inherit"
-        });
-        console.log(c.green("Update berhasil! Silakan restart CLI (ketik /exit lalu buka lagi)."));
-      } catch (e) {
-        console.log(c.red(`Gagal update: ${e.message}`));
-      }
+      performUpdate();
       return true;
     }
     case "/fix": {
@@ -298,6 +291,14 @@ async function main() {
   console.log(`  ${c.bold("Model:")} ${config.model}   ${c.dim(`dir: ${workdir}`)}`);
   console.log(`  ${c.dim("Ketik / buat menu perintah, /help buat bantuan.")}`);
   if (values.yolo) console.log(`  ${c.yellow("MODE YOLO: semua aksi auto-approve!")}`);
+  
+  // Cek update otomatis dari GitHub di background
+  checkAutoUpdate(VERSION).then((upd) => {
+    if (upd?.hasUpdate) {
+      console.log(c.yellow(`\n  🎉 Update YanLan Codex baru tersedia! (${VERSION} → ${upd.latestVersion})`));
+      console.log(c.dim(`  Ketik ${c.cyan("/update")} untuk memperbarui ke versi terbaru.`));
+    }
+  });
   console.log();
   if (splash) await new Promise((r) => setTimeout(r, 2000));
 

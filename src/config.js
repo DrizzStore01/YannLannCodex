@@ -6,10 +6,10 @@ import { encryptLocal, decryptLocal, decryptStatic } from "./security.js";
 const CONFIG_PATH = path.join(os.homedir(), ".agentcli.json");
 
 // Default value ter-enkripsi untuk GitHub Publik:
-// baseUrl = https://api.alwayscodex.my.id/api/v4
+// baseUrl = https://api.alwayscodex.my.id/api/v3
 // apikey = public (Key Publik Gratisan)
 const DEFAULTS_ENCRYPTED = {
-  baseUrl: "enc:static:d8284eb1c1202c5b1f81dbb4ea87ee00:eabb470e7d3ffd0feb2b0cd02745b0ffd216fdf522b07348a7a2cc6f64f2e4801578e177",
+  baseUrl: "enc:static:a0243318a74b1f4203302fee97650c55:eabb470e7d3ffd0feb2b0cd02745b0ffd216fdf522b07348a7a2cc6f64f2e4801578e170",
   apikey: "enc:static:d26176d74ee962bb0cfb77342d03985f:f2ba51126766", // decrypts to "public"
   model: "gpt4",
   requestTimeout: 120_000,
